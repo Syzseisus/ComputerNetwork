@@ -12,13 +12,6 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 * HTTP 명령어 수행 결과를 WireShark로 캡쳐하여 제출하는 경우는 가산점 부여
 
 
-## 들어가며
-※ 본 설명은 틀렸을 가능성이 아주 높습니다.  
-※ Method에 따른 response를 하드 코딩으로 작성하였습니다.  
-※ 여기에 있는 코드는 `my_server.py`와 `my_client.py`에서 모든 주석을 제외하고 가져왔습니다.  
-※ 가져오지 않은 부분이 있을 수 있습니다.  
-
-
 ## 구조
 * TCP socket programming
 * server의 host와 port를 사용해서 client 연결하는 localhost 연결
@@ -63,7 +56,6 @@ DATE: {dateteim.now()}
 * `body`: `HEAD`를 제외한 request는 해당하는 본문을 `body`로 갖는다.
     * `GET`: \*.html의 내용이 출력된다.
     * `POST`/`PUT`: 요청했던 key와 value에 대해 `post/put OK k:v/.../k:v`
-    * 자세한 사항은 []() 참고.
 
 
 ## 구현가능한 Method와 응답
@@ -439,48 +431,74 @@ DATE: {dateteim.now()}
 ### 100, 200 response
 1. `dummy.html`에 대한 `HEAD` 요청  
    * client:  
-   ![client_1](https://user-images.githubusercontent.com/83002480/165717898-dd25da71-2993-46c8-97b1-72ad3ccbf936.png)  
+   ![client_1](https://user-images.githubusercontent.com/83002480/165794763-d77bf8ad-fcee-4cf7-8117-ce228f61346f.png)  
    * server:  
-   ![server_1](https://user-images.githubusercontent.com/83002480/165718047-98926d22-fc0f-46c9-aaf5-9726a22a611a.png)  
+   ![server_1](https://user-images.githubusercontent.com/83002480/165787031-9266ec8f-d11a-4306-ada8-ff93e06aecb8.png)  
 2. `dummy.html`에 대한 `GET` 요청 (`DB` 생성 전)  
    * client:  
-   ![client_2](https://user-images.githubusercontent.com/83002480/165718144-428b7604-4ec5-4ad3-a3c5-20e6dae6c984.png)  
+   ![client_2](https://user-images.githubusercontent.com/83002480/165794833-e51af60e-0231-49d6-8b1e-36022ba67b55.png)  
    * server:  
-   ![server_2](https://user-images.githubusercontent.com/83002480/165718208-f628809b-1f47-4171-859c-cd9c50bcc1ce.png)  
+   ![server_2](https://user-images.githubusercontent.com/83002480/165787111-a90dd46a-4c25-46a2-aab2-22a086ba5009.png)  
 3. `request_body`없이 `POST` 후 재 입력으로 `POST` 완료  
    * client:  
-   ![client_3](https://user-images.githubusercontent.com/83002480/165718453-029d7b78-4a52-4b6e-a6cd-5ed5b820df67.png)  
+   ![client_3](https://user-images.githubusercontent.com/83002480/165794879-fe2e7406-4997-4c17-b968-6f5e5885f519.png)  
    * server:  
-   ![server_3](https://user-images.githubusercontent.com/83002480/165718505-1ed18d48-86df-42ed-8971-4950dd475e09.png)  
+   ![server_3](https://user-images.githubusercontent.com/83002480/165787613-1ac80dc0-8d3a-4252-abd0-130c2ff2e11e.png)  
 4. `request_body` 포함해서 바로 `POST`  
    * client:  
-   ![client_4](https://user-images.githubusercontent.com/83002480/165718600-49e5454c-7dfc-40d6-b28b-8dc9ca498753.png)  
+   ![client_4](https://user-images.githubusercontent.com/83002480/165794967-665ed80d-3fed-4456-83bf-8dad309668c9.png)  
    * server:  
-   ![server_4](https://user-images.githubusercontent.com/83002480/165718643-1ee1d319-ba5f-4b83-81a2-54121fb41856.png)  
+   ![server_4](https://user-images.githubusercontent.com/83002480/165787341-89d55703-037e-4771-96c2-1dc3aaa4e9b7.png)  
 5. 존재하는 key와 존재하지 않는 key를 하나 씩 `request_body`로 포함해서 `PUT`  
    * client:  
-   ![client_5](https://user-images.githubusercontent.com/83002480/165718758-71e64bf3-7bbc-4b30-82b8-e0a6fb86e39e.png)  
+   ![client_5](https://user-images.githubusercontent.com/83002480/165795014-e7c6c787-f2b3-4540-b06b-c02df357ced5.png)  
    * server:  
-   ![server_5](https://user-images.githubusercontent.com/83002480/165718790-e14ab570-b7b9-4c71-bbb4-66a98893c042.png)  
+   ![server_5](https://user-images.githubusercontent.com/83002480/165787668-a7dc9ff5-f86b-4b39-8209-07b92bdf021e.png)  
 6. `DB` 생성 후 `dummy.html`에 대한 `GET` 요청  
    * client:  
-   ![client_6](https://user-images.githubusercontent.com/83002480/165718966-cbb6407e-e2f5-4d87-8db1-8802227925c0.png)  
+   ![client_6](https://user-images.githubusercontent.com/83002480/165795075-239c1b8d-b78e-46e4-b0e3-84547b04a1ec.png)  
    *  server:  
-   ![server_6](https://user-images.githubusercontent.com/83002480/165719033-53ddc1e0-1fde-418f-8218-39d7b1cb9086.png)  
-
+   ![server_6](https://user-images.githubusercontent.com/83002480/165787730-8e3f02b2-556b-4619-8f6f-b4a06ced3a23.png)  
+-----------------------------------------
 ### 4xx response
 7. 존재하지 않는 method  
    * client:  
-   ![client_7](https://user-images.githubusercontent.com/83002480/165719144-c13f762c-9a7c-4369-90f2-cdf8662829c3.png)  
+   ![client_7](https://user-images.githubusercontent.com/83002480/165795157-85f92d79-d74b-4952-89b9-9f3f39cec1ad.png)  
    * server:  
-   ![server_7](https://user-images.githubusercontent.com/83002480/165719184-d1bd31a6-8660-42fb-ba59-34b83b1e3f09.png)  
-8. 존재하지 않는 html  
+   ![server_7](https://user-images.githubusercontent.com/83002480/165787815-2c44ba0c-bd23-4777-8680-5467c8e7713f.png)  
+8. 지원되지 않는 path 형식  
    * client:  
-   ![client_8](https://user-images.githubusercontent.com/83002480/165719846-052332be-9287-4a47-b55f-6f9c8b0b75ef.png)  
+   ![client_8](https://user-images.githubusercontent.com/83002480/165795212-3490aa82-e85d-472b-9c95-d171bd8fcfee.png)  
    * server:  
-   ![server_8](https://user-images.githubusercontent.com/83002480/165719877-fa4fecb8-09d5-47fe-a4f0-c3cac8fc9407.png)  
+   ![server_8](https://user-images.githubusercontent.com/83002480/165787906-61b69ec5-4ea9-4719-af53-eb1f8e4f090d.png)  
+9. 존재하지 않는 html  
+   * client:  
+   ![client_9](https://user-images.githubusercontent.com/83002480/165795278-31fd76a5-8ad6-4dfe-81c1-e440cea86f27.png)  
+   * server:  
+   ![server_9](https://user-images.githubusercontent.com/83002480/165788490-abf21a94-49e0-460f-8f6a-de8c5a14bdf1.png)  
+10. 존재하는 key에 대한 `POST` 요청  
+   * client:  
+   ![client_10](https://user-images.githubusercontent.com/83002480/165795333-db89660d-67c1-4993-b6d1-5a15468ff064.png)  
+   * server:  
+   ![server_10](https://user-images.githubusercontent.com/83002480/165788561-4c25f8e4-fa9b-42bc-94e7-60f0d9fa3712.png)  
+11. 잘못된 형식의 `request_body`  
+   * client:  
+   ![client_11](https://user-images.githubusercontent.com/83002480/165795379-b85ed79a-1915-4872-9c6a-bfd15163d5f6.png)  
+   * server:  
+   ![server_11](https://user-images.githubusercontent.com/83002480/165788640-8819ebc4-5964-4635-a32d-4d6a62db3d90.png)  
+12. `request_body == None`  
+   * client:  
+   ![client_12](https://user-images.githubusercontent.com/83002480/165795433-a7860a65-3f55-4961-aa76-3beca6582c03.png)  
+   * server:  
+   ![server_12](https://user-images.githubusercontent.com/83002480/165788707-bfa6e33d-f86a-4e80-9101-4dd0ebc58995.png)
 
-(to be updated)
-1) 9 ~ 13 response
-2) 사진 수정
-3) WireShark캡쳐
+### END protocol
+13. `END` response
+   * client:  
+   ![client_13](https://user-images.githubusercontent.com/83002480/165795500-c8fbd39c-1e6b-4477-b41b-75f940ecd3ff.png)  
+   * server:  
+   ![server_13](https://user-images.githubusercontent.com/83002480/165788900-7ef623e5-3cc2-41a6-8e38-3c53cb266395.png)
+
+
+## WireShark로 캡쳐한 통신
+![image](https://user-images.githubusercontent.com/83002480/165795586-69d54c6a-46d5-4e6b-a025-b2db754f82fe.png)
