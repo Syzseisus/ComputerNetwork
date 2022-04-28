@@ -1,3 +1,15 @@
+'''
+This File creates server and receive request from client
+Returns response correspond to {method} using ### Method function:
+    HTTP/1.1 {code} {status}
+    HOST: {HOST}/{path}
+    Content-Type: text/html
+    Connection: keep-alive
+    Content-Length: {len(body)}
+    DATE: {dateteim.now()}
+
+    {body}
+'''
 from datetime import datetime
 from socket import *
 
@@ -8,6 +20,7 @@ IP = '127.0.0.1' if HOST == 'localhost' else HOST
 PORT = 8080
 DB = {}    # create {KEY:VALUE} with POST/PUT, update value of key with PUT
 POST_continue = False   # for POST 100 CONTINUE
+
 
 ### Interpreting request / Return response
 def HandlingData(url, method, request_body):
@@ -276,6 +289,7 @@ server_socket = socket(AF_INET, SOCK_STREAM)
 server_socket.bind( (HOST, PORT) )
 server_socket.listen()
 
+
 ### waiting for client(s)
 while True:
     '''
@@ -321,6 +335,7 @@ while True:
     ## End
     print("="*20, " ENDED ", "="*21, '\n', sep='')
 
+    
 ### Close client and server when break
 client_socket.close()
 server_socket.close()
