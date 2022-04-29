@@ -2,14 +2,26 @@
 \- 소켓 통신을 활용하여 [Server](https://github.com/Syzseisus/ComputerNetwork/blob/main/MidTerm_Replace_HW/my_server.py), 
 [Client](https://github.com/Syzseisus/ComputerNetwork/blob/main/MidTerm_Replace_HW/my_client.py) 프로그램 작성 (Python)  
 \- TCP 기반 소켓 프로그래밍 작성 후  
-Client에서는 HTTP 프로토콜의 GET/HEAD/POST/PUT Request를 요청하여  
-Server에서는 Client의 Request에 따라 응답 메시지를 구성하여 Response하도록 구현  
-(TCP 기반 Client, Server 구현한 프로그램 파일을 제출)  
+&#x2004;&#x2004;Client에서는 HTTP 프로토콜의 GET/HEAD/POST/PUT Request를 요청하여  
+&#x2004;&#x2004;Server에서는 Client의 Request에 따라 응답 메시지를 구성하여 Response하도록 구현  
+&#x2004;&#x2004;(TCP 기반 Client, Server 구현한 프로그램 파일을 제출)  
 * 예) Method-응답 xxx의 case 5개 이상 수행  
 GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1xx 등  
 * 소켓 통신은 PC가 2대 이상이면 Client, Server 실행은 분리하여 진행을 권장  
 2대 이상 환경이 안되는 경우는 localhost로 진행도 가능  
 * HTTP 명령어 수행 결과를 WireShark로 캡쳐하여 제출하는 경우는 가산점 부여
+
+
+
+## 목록
+1. [구조](#구조)
+2. [client의 Request 형식](#client의-request-형식)
+3. [server의 Response 형식](#server의-response-형식)
+4. [구현가능한 Method와 응답](#구현가능한-method와-응답)
+5. [코드 설명](#코드-설명)
+6. [작동예시](#작동예시)
+7. [WireShark로 캡쳐한 통신](#wireshark로-캡쳐한-통신)
+
 
 
 ## 구조
@@ -18,67 +30,68 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 * HTTP 기반으로 통신하되 `if-else`문을 기반으로 request와 response를 해석한다
 
 
-## client의 Request 형식
-```
-{METHOD} / HTTP/1.1
-Host: 127.0.0.1/{PATH}
-Content-Type: text/html
-Connection: keep-alive
-Content-Length: {len(REQUEST_BODY)}
 
-{REQUEST_BODY}
-```
-* `METHOD`: `HEAD`, `GET`, `POST`, `PUT` 중 하나
-* `PATH`: `HEAD`와 `GET`은 \*.html 파일의 이름을 받고  
+## client의 Request 형식
+>{METHOD} / HTTP/1.1  
+>Host: 127.0.0.1/{PATH}  
+>Content-Type: text/html  
+>Connection: keep-alive  
+>Content-Length: {len(REQUEST_BODY)}  
+>  
+>{REQUEST_BODY}  
+
+* `METHOD` : `HEAD`, `GET`, `POST`, `PUT` 중 하나
+* `PATH` : `HEAD`와 `GET`은 \*.html 파일의 이름을 받고  
 `POST`와 `PUT`은 각각 기본적으로 create와 update를 받으나 혼용 가능하다.
-* `REQUEST_BODY`: `POST`, `PUT`을 통해 서버에 생성하고자 하는 데이터.  
+* `REQUEST_BODY` : `POST`, `PUT`을 통해 서버에 생성하고자 하는 데이터.  
 `key1=val1&...&key2=val2` 형식으로 작성해야 한다.
 
 
-## server의 Response 형식
-```
-HTTP/1.1 {code} {status}
-HOST: {HOST}/{path}
-Content-Type: text/html
-Connection: keep-alive
-Content-Length: {len(body)}
-DATE: {dateteim.now()}
 
-{body}
-```
+## server의 Response 형식
+>HTTP/1.1 {code} {status}  
+>HOST: {HOST}/{path}  
+>Content-Type: text/html  
+>Connection: keep-alive  
+>Content-Length: {len(body)}  
+>DATE: {dateteim.now()}  
+>  
+>{body}  
 * Request의 해석에 따라 다음 중 하나로 `code`와 `status`가 정해진다.
     * `100 CONTINUE`
     * `200 OK`
     * `400 BAD_REQUEST`
     * `404 NOT_FOUND`
     * `405 NOT_ALLOWED_METHOD`
-* `HOST`: 현 서버의 IP
-* `path`: `request`로 들어온 `path`와 같은 값이다.
-* `body`: `HEAD`를 제외한 `request`의 `response`는 해당하는 본문을 `body`로 갖는다.
-   * 예시는 함수 설명 참조
+* `HOST` : 현 서버의 IP
+* `path` : `request`로 들어온 `path`와 같은 값이다.
+* `body` : `HEAD`를 제외한 `request`의 `response`는 해당하는 본문을 `body`로 갖는다.
+   * 예시는 [함수 설명](https://github.com/Syzseisus/ComputerNetwork/edit/main/MidTerm_Replace_HW/README.md#1-serverpy) 참조
+
 
 
 ## 구현가능한 Method와 응답
-`client`에서 `method`, `path`, `body`, `IP`를 다음과 같이 입력해서 `request`할 때  
-`server`의 `response` header의 status와 code:
-[결과](https://github.com/Syzseisus/ComputerNetwork/edit/main/MidTerm_Replace_HW/README.md#%EC%9E%91%EB%8F%99%EC%98%88%EC%8B%9C)
-1. `('HEAD', 'dummy.html', '', IP)`: `100 CONTINUE`
-2. `('GET ', 'dummy.html', '', IP)`: `200 OK`
-3. `('POST', 'create', '', IP)`: `100 CONTINUE` → `client`에서 `key=val` 입력 다시 받고 `200 OK`
-4. `('POST', 'create', 'User-ID=K2022031&Grade=F', IP)`: `200 OK`
-5. `('PUT' , 'update', 'Grade=A+&Major=Artificial Intelligence', IP)`: `200 OK`
-6. `('GET' , 'dummy.html', '', IP)`: `200 OK`
+client에서 `method`, `path`, `body`, `IP`를 다음과 같이 입력해서 `request`할 때  
+server의 `response` header의 status와 code:  
+[결과](#작동예시)
+1. `('HEAD', 'dummy.html', '', IP)` : `100 CONTINUE`
+2. `('GET ', 'dummy.html', '', IP)` : `200 OK`
+3. `('POST', 'create', '', IP)` : `100 CONTINUE` → `client`에서 `key=val` 입력 다시 받고 `200 OK`
+4. `('POST', 'create', 'User-ID=K2022031&Grade=F', IP)` : `200 OK`
+5. `('PUT' , 'update', 'Grade=A+&Major=Artificial Intelligence', IP)` : `200 OK`
+6. `('GET' , 'dummy.html', '', IP)` : `200 OK`
 ---
-7. `('HEAD', 'dummy.html', '', '1.1.1.1')`: `400 BAD_REQUEST`
-8. `('GET' , 'foo.exe', '', IP)`: `405 METHOD_NOT_ALLOWED`
-9. `('HEAD', 'foo.html', '', IP): `404_NOT_FOUND`
-10. `('FOO' , 'dummy.html', '', IP)`: `405 METHOD_NOT_ALLOWED`
-11. `('PUT' , 'foo', '', IP)`: `405 METHOD_NOT_ALLOWED`
+7. `('HEAD', 'dummy.html', '', '1.1.1.1')` : `400 BAD_REQUEST`
+8. `('GET' , 'foo.exe', '', IP)` : `405 METHOD_NOT_ALLOWED`
+9. `('HEAD', 'foo.html', '', IP)` : `404_NOT_FOUND`
+10. `('FOO' , 'dummy.html', '', IP)` : `405 METHOD_NOT_ALLOWED`
+11. `('PUT' , 'foo', '', IP)` : `405 METHOD_NOT_ALLOWED`
 ---
-12. `('POST', 'create', 'Grade=B', IP)`: `400 BAD_REQUEST`
-13. `('POST', 'create', '', IP)`: `400 BAD_REQUEST`
+12. `('POST', 'create', 'Grade=B', IP)` : `400 BAD_REQUEST`
+13. `('POST', 'create', '', IP)` : `400 BAD_REQUEST`
 ---
-14. `('END', '' , '', IP)` → `client`와 `server` 종료
+14. `('END', '' , '', IP)` → client와 server 종료
+
 
 
 ## 코드 설명
@@ -91,11 +104,11 @@ DATE: {dateteim.now()}
     from socket import *
     ```
 2. 변수
-    - `root_dir`: \*.html 파일 저장되어 있는 곳 (=cmd로 python 실행시키는 폴더)
-    - `HOST`, `IP`, `PORT`: server 주소
-    - `DB`: `POST`, `PUT` request를 통해 서버에 저장된 데이터
-    - `POST_continue`: `POST 100`이 발생했을 때 server가 기존 client와 연결을 유지하고 있게 하기 위함
-    - `STATUS`: `status_code`와 `status_statement`를 묶어놓은 dictionary
+    - `root_dir` : \*.html 파일 저장되어 있는 곳 (=cmd로 python 실행시키는 폴더)
+    - `HOST`, `IP`, `PORT` : server 주소
+    - `DB` : `POST`, `PUT` request를 통해 서버에 저장된 데이터
+    - `POST_continue` : `POST 100`이 발생했을 때 server가 기존 client와 연결을 유지하고 있게 하기 위함
+    - `STATUS` : `status_code`와 `status_statement`를 묶어놓은 dictionary
     ```python
    root_dir = "D:/ComputerNetwork/"
    HOST = 'localhost'
@@ -108,13 +121,13 @@ DATE: {dateteim.now()}
     ```
 3. Request 처리
     - HTTP protocol로 들어온 request를 해석하고 적절한 response 반환
-    - 첫 번째 `if` 문: `method` 확인
-    - 두 번째 `if-else` 문: `url`의 형식 확인
-    - 세 번째 `if-else` 문: request로 들어온 `host` 확인
-    - 네 번째 `if-else` 문: `path` 확인
-    - 다섯 번째 `if-else` 문: \*.html 파일이 제대로 읽히는 지 확인
-    - 여섯 번째 `if-elif` 문: `HEAD`와 `GET` method 구분하여 response 반환
-    - 일곱 번째 `if-elif` 문: `POST`와 `PUT` method 구분하여 response 반환
+    - 첫 번째 `if` 문 : `method` 확인
+    - 두 번째 `if-else` 문 : `url`의 형식 확인
+    - 세 번째 `if-else` 문 : request로 들어온 `host` 확인
+    - 네 번째 `if-else` 문 : `path` 확인
+    - 다섯 번째 `if-else` 문 : \*.html 파일이 제대로 읽히는 지 확인
+    - 여섯 번째 `if-elif` 문 : `HEAD`와 `GET` method 구분하여 response 반환
+    - 일곱 번째 `if-elif` 문 : `POST`와 `PUT` method 구분하여 response 반환
     ```python
       def from_request_to_response(method, url, request_body):
           if method not in ["HEAD", "GET", "POST", "PUT"]:
@@ -163,7 +176,7 @@ DATE: {dateteim.now()}
           return response
     ```
 4. response 작성
-    * 모든 `response`는 아래의 format을 따릅니다.
+    * 모든 `response`는 [언급했듯](#client의-request-형식) 아래의 format을 따릅니다.
     ```python
       def response_formatting(code, path, body=''):
       
@@ -177,14 +190,14 @@ DATE: {dateteim.now()}
     ```
 5. Method function
     * Method에 따른 response를 반환합니다.
-    * `HEAD`: `100 CONTINUE`를 헤더로 \*.html 본문의 길이를 포함하여 반환합니다.
+    * `HEAD` : `100 CONTINUE`를 헤더로 \*.html 본문의 길이를 포함하여 반환합니다.
         ```python
         def HEAD(path, body):
             response = response_formatting(100, path, body)
 
             return response
         ```
-    * `GET`: `200 OK`를 헤더로 \*.html 본문의 길이를 포함하며, 본문을 `body`로 반환합니다.  
+    * `GET` : `200 OK`를 헤더로 \*.html 본문의 길이를 포함하며, 본문을 `body`로 반환합니다.  
 추가로 `DB`에 데이터가 있다면 같이 `body`로 반환합니다.
         ```python
         def GET(path, body):
@@ -199,7 +212,7 @@ DATE: {dateteim.now()}
 
             return response
         ```
-    * `POST`: `request_body`가 없으면 `100 CONTINUE`를, 있으면 `200 OK`를 헤더로 하며 추가된 데이터를 `body`로 반환합니다.
+    * `POST` : `request_body`가 없으면 `100 CONTINUE`를, 있으면 `200 OK`를 헤더로 하며 추가된 데이터를 `body`로 반환합니다.
         ```python
           if request_body == '':
               body = "What do you want to POST to create?\n(key=value pairs separated with &)"
@@ -230,7 +243,7 @@ DATE: {dateteim.now()}
 
           return response
         ```
-    * `PUT`: `request_body`가 없으면 `400 BAD REQUEST`를, 있으면 `200 OK`를 헤더로 하여 추가/업데이트된 데이터를 `body`로 반환합니다.
+    * `PUT` : `request_body`가 없으면 `400 BAD REQUEST`를, 있으면 `200 OK`를 헤더로 하여 추가/업데이트된 데이터를 `body`로 반환합니다.
         ```python
           if request_body == '':
               body = "EMPTY KEY=VALUE PAIRS"
@@ -345,6 +358,7 @@ DATE: {dateteim.now()}
       ```
 
 
+
 ### 2. [client.py](https://github.com/Syzseisus/ComputerNetwork/blob/main/MidTerm_Replace_HW/my_client.py)
 1. `import`
     * 소켓 통신을 위한 `socket`
@@ -352,14 +366,14 @@ DATE: {dateteim.now()}
         from socket import *
         ```
 2. 변수
-    * `IP`, `PORT`: 연결하고자 하는 서버의 주소입니다.
+    * `IP`, `PORT` : 연결하고자 하는 서버의 주소입니다.
         ```python
         IP = '127.0.0.1'
         PORT = 8080
         ```
 3. Test Case
    * 설정해둔 `test_case`를 바탕으로 통신을 진행합니다.
-   * [여기](https://github.com/Syzseisus/ComputerNetwork/edit/main/MidTerm_Replace_HW/README.md#%EA%B5%AC%ED%98%84%EA%B0%80%EB%8A%A5%ED%95%9C-method%EC%99%80-%EC%9D%91%EB%8B%B5)에 나와있는 순서와 같습니다.
+   * [여기](#구현가능한-method와-응답)에 나와있는 순서와 같습니다.
       ```python
       test_case = [
           ('HEAD', 'dummy.html', '', IP),
@@ -446,79 +460,80 @@ DATE: {dateteim.now()}
 ## 작동예시
 server에서 request를 볼 수 있고,  
 client에서 response를 볼 수 있습니다.
-1. `('HEAD', 'dummy.html', '', IP)`: `100 CONTINUE`  
-   * server:  
+1. `('HEAD', 'dummy.html', '', IP)` : `100 CONTINUE`  
+   * server :  
       ![server_1](https://user-images.githubusercontent.com/83002480/165908549-b365a88a-a311-410f-aba6-5b158efed544.png)  
-   * client:  
+   * client :  
       ![client_1](https://user-images.githubusercontent.com/83002480/165907956-c745fe06-39dd-45e9-a284-f643a56c0167.png)  
-2. `('GET ', 'dummy.html', '', IP)`: `200 OK`  
-   * server:  
+2. `('GET ', 'dummy.html', '', IP)` : `200 OK`  
+   * server :  
       ![server_2](https://user-images.githubusercontent.com/83002480/165908576-3edb5449-5883-485a-876e-83d4d2aa368d.png)  
-   * client:  
+   * client :  
       ![client_2](https://user-images.githubusercontent.com/83002480/165908027-37d4f2b5-bb64-4d99-b959-aee49bf61657.png)  
-3. `('POST', 'create', '', IP)`: `100 CONTINUE` → `client`에서 `key=val` 입력 다시 받고 `200 OK`    
-   * server:  
+3. `('POST', 'create', '', IP)` : `100 CONTINUE` → `client`에서 `key=val` 입력 다시 받고 `200 OK`    
+   * server :  
       ![server_3](https://user-images.githubusercontent.com/83002480/165908669-0676d2fe-3e10-45e7-a0e3-d0917f4f3f99.png)  
-   * client:  
+   * client :  
       ![client_3](https://user-images.githubusercontent.com/83002480/165908091-61ca0d0e-8d4b-4fbe-99fb-ff4f7bf769e1.png)  
-4. `('POST', 'create', 'User-ID=K2022031&Grade=F', IP)`: `200 OK`  
-   * server:  
+4. `('POST', 'create', 'User-ID=K2022031&Grade=F', IP)` : `200 OK`  
+   * server :  
       ![server_4](https://user-images.githubusercontent.com/83002480/165908711-89b6bb0f-7bc8-4099-9e00-9017a76151af.png)  
-   * client:  
+   * client :  
       ![client_4](https://user-images.githubusercontent.com/83002480/165908117-b4822863-6aca-4771-83ff-c3eebc2d7b67.png)  
-5. `('PUT' , 'update', 'Grade=A+&Major=Artificial Intelligence', IP)`: `200 OK`  
-   * server:  
+5. `('PUT' , 'update', 'Grade=A+&Major=Artificial Intelligence', IP)` : `200 OK`  
+   * server :  
       ![server_5](https://user-images.githubusercontent.com/83002480/165908754-bade0867-b494-48de-a591-a23fccdaad6d.png)  
-   * client:  
+   * client :  
       ![client_5](https://user-images.githubusercontent.com/83002480/165908161-da1d4787-c5d0-4521-a1be-320f2c659df1.png)  
-6. `('GET' , 'dummy.html', '', IP)`: `200 OK`  
-   * server:  
+6. `('GET' , 'dummy.html', '', IP)` : `200 OK`  
+   * server :  
       ![server_6](https://user-images.githubusercontent.com/83002480/165908796-cd5b86d7-6055-44b1-a4be-babdb1510eca.png)  
-   * client:  
+   * client :  
       ![client_6](https://user-images.githubusercontent.com/83002480/165908215-53e371b2-4e87-48be-8162-a75e201e4202.png)  
 ---
-7. `('HEAD', 'dummy.html', '', '1.1.1.1')`: `400 BAD_REQUEST`  
-   * server:  
+7. `('HEAD', 'dummy.html', '', '1.1.1.1')` : `400 BAD_REQUEST`  
+   * server :  
       ![server_7](https://user-images.githubusercontent.com/83002480/165908841-72d67f40-bcad-45af-9d4b-a5386c322a0b.png)  
-   * client:  
+   * client :  
       ![client_7](https://user-images.githubusercontent.com/83002480/165908240-78fd3bbc-d491-4f96-9e2e-a0273d10b001.png)  
-8. `('GET' , 'foo.exe', '', IP)`: `405 METHOD_NOT_ALLOWED`  
-   * server:  
+8. `('GET' , 'foo.exe', '', IP)` : `405 METHOD_NOT_ALLOWED`  
+   * server :  
       ![server_8](https://user-images.githubusercontent.com/83002480/165908878-edeb16d6-cc32-4f75-896e-e6cf6a74be30.png)  
-   * client:  
+   * client :  
       ![client_8](https://user-images.githubusercontent.com/83002480/165908256-d68eed5a-cd0a-44d3-b358-65ef68243e27.png)  
-9. `('HEAD', 'foo.html', '', IP): `404_NOT_FOUND`  
-   * server:  
+9. `('HEAD', 'foo.html', '', IP) : `404_NOT_FOUND`  
+   * server :  
       ![server_9](https://user-images.githubusercontent.com/83002480/165908903-5c018879-7281-466c-9989-f504cdbde36d.png)  
-   * client:  
+   * client :  
       ![client_9](https://user-images.githubusercontent.com/83002480/165908279-613582c4-9745-4013-8922-38564bfa56f1.png)  
-10. `('FOO' , 'dummy.html', '', IP)`: `405 METHOD_NOT_ALLOWED`  
-   * server:  
+10. `('FOO' , 'dummy.html', '', IP)` : `405 METHOD_NOT_ALLOWED`
+      * server :  
       ![server_10](https://user-images.githubusercontent.com/83002480/165908923-e5a43371-bfb8-4abd-8a6c-5557598aef1e.png)  
-   * client:  
+      * client :  
       ![client_10](https://user-images.githubusercontent.com/83002480/165908311-961c6bc0-5d69-499a-8041-c03ee38f3cfa.png)  
-11. `('PUT' , 'foo', '', IP)`: `405 METHOD_NOT_ALLOWED`  
-   * server:  
+11. `('PUT' , 'foo', '', IP)` : `405 METHOD_NOT_ALLOWED`  
+      * server :  
       ![server_11](https://user-images.githubusercontent.com/83002480/165908948-fc988fda-c040-4ff9-a7de-7f4851d4876d.png)  
-   * client:  
+      * client :  
       ![client_11](https://user-images.githubusercontent.com/83002480/165908341-d427be7a-4d52-47c7-b72d-223cd43f94e0.png)  
 ---
-12. `('POST', 'create', 'Grade=B', IP)`: `400 BAD_REQUEST`  
-   * server:  
+12. `('POST', 'create', 'Grade=B', IP)` : `400 BAD_REQUEST`  
+      * server :  
       ![server_12](https://user-images.githubusercontent.com/83002480/165908963-285a81bb-a52d-4a66-96f0-8d9db27d12c2.png)  
-   * client:  
+      * client :  
       ![client_12](https://user-images.githubusercontent.com/83002480/165908363-85a82d23-38ab-4ae1-a2e1-4fd94496f9d1.png)  
 13. `('POST', 'create', '', IP)`: `400 BAD_REQUEST`  
-   * server:  
+      * server :  
       ![server_13](https://user-images.githubusercontent.com/83002480/165908999-e94ca8e4-d878-4767-b370-f73ff80b63ea.png)  
-   * client:  
+      * client :  
       ![client_13](https://user-images.githubusercontent.com/83002480/165908404-8e1a2f19-fe8c-4816-9a6a-4f32e7ba1b01.png)  
 ---
 14. `('END', '' , '', IP)` → `client`와 `server` 종료  
-   * server:  
+      * server :  
       ![server_14](https://user-images.githubusercontent.com/83002480/165909033-87f21cbf-5c40-47f0-800b-f333836a5c67.png)  
-   * client:  
+      * client :  
       ![client_14](https://user-images.githubusercontent.com/83002480/165908431-73619548-e39a-4cbe-8697-e40b4a86b122.png)  
+
 
 
 ## WireShark로 캡쳐한 통신
