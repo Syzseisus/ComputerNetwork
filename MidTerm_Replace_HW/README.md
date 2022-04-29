@@ -13,6 +13,14 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 
 
 
+## 들어가며
+※ 본 설명은 틀렸을 가능성이 아주 높습니다.  
+※ Method에 따른 response를 하드 코딩으로 작성하였습니다.  
+※ 여기에 있는 코드는 `my_server.py`와 `my_client.py`에서 모든 주석을 제외하고 가져왔습니다.  
+※ 가져오지 않은 부분이 있을 수 있습니다.  
+
+
+
 ## 목록
 1. [구조](#구조)
 2. [client의 Request 형식](#client의-request-형식)
