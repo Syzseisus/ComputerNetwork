@@ -28,7 +28,8 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 
 ## 구조
 * TCP socket programming
-* server의 host와 port를 사용해서 client 연결하는 localhost 연결
+* server의 host와 port를 사용해서 client 연결
+* 하나의 컴퓨터에서 서로 다른 `cmd`를 열어 localhost로 
 * HTTP 기반으로 통신하되 `if-else`문을 기반으로 request와 response를 해석한다
 
 
