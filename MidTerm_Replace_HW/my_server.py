@@ -1,6 +1,5 @@
 '''
-This File creates server and receive request from client
-Returns response correspond to {method} using ### Method function:
+Send response as:
     HTTP/1.1 {code} {status}
     HOST: {HOST}/{path}
     Content-Type: text/html
@@ -9,48 +8,62 @@ Returns response correspond to {method} using ### Method function:
     DATE: {dateteim.now()}
 
     {body}
+
+with respect to received request from server.
 '''
 from datetime import datetime
 from socket import *
 
 ### Variables
-root_dir = "D:/ComputerNetwork/"    # where .html files exist
-HOST = '127.0.0.1'
+## html file root folder
+root_dir = "D:/ComputerNetwork/"
+
+## Address
+HOST = 'localhost'
 IP = '127.0.0.1' if HOST == 'localhost' else HOST
 PORT = 8080
-DB = {}    # create {KEY:VALUE} with POST/PUT, update value of key with PUT
-POST_continue = False   # for POST 100 CONTINUE
+
+## POST/PUT
+DB = {}     # create/update {key:value} with POST/PUT
+POST_continue = False   # skip acception for POST 100 CONTINUE response
+
+## Status
+STATUS = {100:'CONTINUE', 200:'OK',
+          400:'BAD_REQUEST', 404:'NOT_FOUND', 405:'METHOD_NOT_ALLOWED'}
 
 
-### Interpreting request / Return response
-def HandlingData(url, method, request_body):
+### Interpretate request / Detect error / Return response
+def from_request_to_response(method, url, request_body):
     '''
-    Returns response correspond to {method}
-    Return 4xx reponse when:
-        1. method is not in [HEAD, GET, POST, PUT]
-        2. there is no html file in root_dir
-        3. path is not in [*.html, create, update]
-        4. requested host != HOST
-        5. format of url is not {host}/{path}
-    respectively
+    1. code = 400, status = BAD_REQUEST
+       body = "DIFFERNET HOST: {input host}"
+    2. code = 404, status = NOT_FOUND
+       1) body = "WRONG ADDRESS: {input url}"
+       2) body = "CANNOT FIND {input path}"
+    3. code = 405, status = MEHOTD_NOT_ALLOWED
+       1) body = "NOT ALLOWED METHOD: {input method}"
+       2) body = "NOT ALLOWED PATH: {input path}"
     '''
-    if method not in ["HEAD", "GET", "POST", "PUT"]:
-        return STATUS_4xx(405, method)
+    if method not in ["HEAD", "GET", "POST", "PUT"]:    # Error 3-1
+        body = f"NOT ALLOWED METHOD: {method}"
+        response = response_formatting(405, url.split('/')[1][:-1], body)
+        response += body
 
     if '/' in url:
 
         host, path = url.split('/')
         path = path[:-1] # Eluminate "\r"
-        if host == HOST:
+        if host == IP:
 
             # HEAD & GET: read html file
             if 'html' in path:
                 
                 # save html file in body
                 body = open_html(path)
-                print("TYPE OF BODY:", type(body))
-                if body == None:
-                    response = STATUS_4xx(404, method)
+                if body == None:    # Error 2-2
+                    body = f"CANNOT FIND {path}"
+                    response = response_formatting(404, path, body)
+                    response += body
                 
                 # Return response corresponse to HEAD and GET
                 else:
@@ -64,27 +77,34 @@ def HandlingData(url, method, request_body):
                 if   method == "POST": response = POST(path, request_body)
                 elif method == "PUT" : response =  PUT(path, request_body)
 
-            else:
-                response = STATUS_4xx(405, method)
+            else:   # Error 3-2
+                body = f"NOT ALLOWED PATH: {path}"
+                response = response_formatting(405, path, body)
+                response += body
 
-        else:
-            response = STATUS_4xx(400, method)
+        else:   # Error 1
+            body = f"DIFFERENT HOST: {host}"
+            response = response_formatting(400, path, body)
+            response += body
 
-    else:
-        response = STATUS_4xx(404, method)
+    else:   # Error 2-1
+        body = f"WRONG ADDRESS: {url}"
+        response = response_formatting(404, "?", body)
+        response += body
     
     return response
 
 
-def response_formating(path, body=''):
+### Basic response format
+def response_formatting(code, path, body=''):
     '''
     Use {path} in request and input {body}
-
     Return HTTP-protocol-like response
     '''
     length = len(body) if body else 0
 
     return f'''\
+HTTP/1.1 {code} {STATUS[code]}\r
 Host: 127.0.0.1/{path}\r
 Content-Type: text/html\r
 Connection: keep-alive\r
@@ -92,106 +112,95 @@ Content-Length: {length}\r
 DATE: {datetime.now().strftime("%a, %d %b %Y %H:%M:%S KST")}\r\n\n'''
 
 
-### Method Function
+### Method function
 def HEAD(path, body):
     '''
-    HEAD returns only the length of body
-    '''    
-    # HEAD 100 CONTINUE
-    response = CONTINUE
-    response += response_formating(path, body)
+    code = 100, status = CONTINUE
+    get body from `open_html` function, but
+    exclude {body}
+    '''
+    response = response_formatting(100, path, body)
 
     return response
-
-
+    
 def GET(path, body):
     '''
-    GET returns both the length and contents of body
-    Also returns contents in DB 
+    code = 200, status = OK
+    get body from `open_html` function
+    include {body}
     '''
-    # GET 200 OK
-    response = OK
-
-    # Add contents in DB
     if DB:
-        body += "\nData in DB (created by POST/PUT):\r\n"
+        body += '\nData in DB (created by POST/PUT):\r\n'
         for key in DB:
             body += f"\t{key}:{DB[key]}\r\n"
+    body = body[:-2]    # eliminate last \r\n
 
-    response += response_formating(path, body)
+    response = response_formatting(200, path, body)
     response += body
 
     return response
-
 
 def POST(path, request_body):
     '''
-    Create new {key}:{value} pairs
-    which are expressed in {request_body} as {key}={value}&...&{key}={value}
-
-    If {request_body} == None,
-    Server ask the request_body to client
-
-    If format is different or
-    There is {key} already in DB,
-    It returns BAD REQUEST
+    1. code = 100, status = CONTINUE
+       body = "What do you want to POST to create?
+               (key=value pairs separated with &)"
+    2. code = 200, status = OK
+       body = "post OK: {key:value pairs separated with /}"
+    3. code = 400, status = BAD_REQUEST
+       body = "ALREADY EXIST KEY: {key}"
     '''
-    # Ask input to client when {request_body} is empty
+    # 1.
     if request_body == '':
-        body = "What do you want to POST to create? (key=value with &)"
-
-        # Add response to body
-        response  = CONTINUE
-        response += response_formating(path, body)
+        body = "What do you want to POST to create?\n(key=value pairs separated with &)"
+        response = response_formatting(100, path, body)
         response += body
 
-        return response
-
-    # Check format of {request_body}
-    try:
+    else:
         global DB
-        contents = request_body.split('&')
-        for key_value in contents:
-            key, value = key_value.split('=')
-            if key in DB:
-                return STATUS_4xx(400, method)
+        pairs = request_body.split('&')
+        for pair in pairs:
+            key, val = pair.split('=')
+            if key not in DB:
+                DB[key] = val
+            
+            # Error 3
             else:
-                DB[key] = value
+                body = f"ALREADY EXIST KEY: {key}"
+                response = response_formatting(400, path, body)
+                response += body
+                return response
+
+        # 2.
+        body = "post OK "
+        request_body.replace('&', '/')
+        request_body.replace('=', ':')
+        body += f"{request_body}"
+        
+        response = response_formatting(200, path, body)
+        response += body
     
-    except Exception as ex:
-        return STATUS_4xx(400, method)
-
-    # POST body = post OK key:value/key:value/...
-    body = "post OK "
-    request_body.replace('&', '/')
-    request_body.replace('=', ':')
-    body += f"{request_body}\r\n"
-
-    # Add body to response
-    response  = OK
-    response += response_formating(path, body)
-    response += body
-
     return response
-
 
 def PUT(path, request_body):
     '''
-    Create/update {key}:{value} pairs
-    which are expressed in {request_body} as {key}={value}&...&{key}={value}
-
-    Update if {key} in {DB} and
-    Create if {key} not in {DB}
-
-    If {request_body} == None or format is different,
-    returns BAD REQUEST
+    1. code = 200, status = OK
+       body = "put OK:
+                   Updated:
+                      {{key}:{new_one} from {old_one}} separated with \n
+                   Created:
+                      {key:value} pairs separated with /"
+              from received request
+    2. code = 400, status = BAD_REQUEST
+       body = "EMPTY KEY=VALUE PAIRS"
     '''
-    # Check whether {request_body} is empty or not
+    # Error 2-1
     if request_body == '':
-        return STATUS_4xx(400, method)
+        body = "EMPTY KEY=VALUE PAIRS"
+        response = response_formatting(400, path, body)
+        response += body
     
-    # Check format of {request_body}
-    try:
+    else:
         global DB
         old_values = {}
         request_keys = []
@@ -205,31 +214,25 @@ def PUT(path, request_body):
                 DB[key] = value
             else:
                 DB[key] = value
-            
-    except:
-        return STATUS_4xx(400, method)
+        
+        # 1.
+        body = "put OK:\r\n"
+        update_body = "\tUpdated -\r\n"
+        create_body = "\tCreated -\r\n\t\t"
+        for key in request_keys:
+            if key in old_values:
+                update_body += f"\t\t{key}:{DB[key]} from {old_values[key]}\n"
+            else:
+                create_body += f"{key}:{DB[key]}/"
+        body += update_body + create_body[:-1]
 
-    response = OK
+        response = response_formatting(200, path, body)
+        response += body
 
-    # PUT body =
-    #     put OK:
-    #         key updated: new_value from old_value
-    #         key created: new_value
-    #           ...
-    body = "put OK:\r\n"
-    for key in request_keys:
-        if key in old_values:
-            body += f"\t{key} updated: {DB[key]} from {old_values[key]}\r\n"
-        else:
-            body += f"\t{key} created: {DB[key]}\r\n"
+    return response
+        
 
-    response += response_formating(path, body)
-    response += body
-    
-    return response    
-    
-
-### html Function
+### Read html
 def open_html(file_path):
     '''
     Read {file_path} and return body as:
@@ -270,27 +273,13 @@ def open_html(file_path):
     return body
 
 
-### Status
-CONTINUE = "HTTP/1.1 100 CONTINUE\r\n"
-OK       = "HTTP/1.1 200 OK\r\n"
-
-# For 4xx, add method name
-def STATUS_4xx(code, method):
-    response = f"HTTP/1.1 {method} {code} "
-    if   code == 400: response += f"BAD_REQUEST\r\n"
-    elif code == 404: response += f"NOT_FOUND\r\n"
-    elif code == 405: response += f"METHOD_NOT_ALLOWED"
-
-    return response   
-    
-
 ### Create server (TCP)
 server_socket = socket(AF_INET, SOCK_STREAM)
-server_socket.bind( (HOST, PORT) )
+server_socket.bind( (IP, PORT) )
 server_socket.listen()
 
 
-### waiting for client(s)
+### Waiting for client(s)
 while True:
     '''
     In TCP, server needs to be always on.
@@ -301,41 +290,39 @@ while True:
     # skip accept from other client when POST_continue == True
     if not POST_continue:
         client_socket, address = server_socket.accept()
-        print('\n', "="*8, f" CONNECTED - {address[0]}:{address[1]:5d} ", "="*9, '\n', sep='')
+        print('\n', "="*22, f" CONNECTED - {address[0]}:{address[1]:5d} ", "="*22, '\n', sep='')
 
     ## Receive request
     print(">>> Receiving request ...")
 
-    data = client_socket.recv(65535).decode('utf-8')
-    print(data)
+    request = client_socket.recv(65535).decode('utf-8')
+    print(request)
 
-    if data == 'END':
+    if 'END' in request:
         print("client request END. Quit server.")
         break
     
-    data = data.split('\n')
+    request = request.split('\n')
 
-    ##  Handling request
-    method = data[0].split()
+    ## Interprete request
+    method = request[0].split()
     method = method[0]
-    url = data[1][6:]   # data[1] = Host: {url}
-    request_body = data[-1]
+    url = request[1][6:]   # request[1] = Host: {url}
+    request_body = request[-1]
     
+    ## Return response
+    response = from_request_to_response(method, url, request_body)
+
     ## Send response
-    response = HandlingData(url, method, request_body)
     print("\n>>> Sending response ...")
     client_socket.sendall(response.encode('utf-8'))
     
     # If send POST 100 CONTINUE
-    if 'What do you want to' in response.split('\n')[-1]:
-        POST_continue = True
-    else:
-        POST_continue = False
+    POST_continue = 'What do you want to' in response.split('\n')[-2]
 
     ## End
-    print("="*20, " ENDED ", "="*21, '\n', sep='')
+    print("="*33, " ENDED ", "="*33, '\n\n', sep='')
 
-    
 ### Close client and server when break
 client_socket.close()
 server_socket.close()
