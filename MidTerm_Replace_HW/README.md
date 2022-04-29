@@ -19,6 +19,8 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 3. [server의 Response 형식](#server의-response-형식)
 4. [구현가능한 Method와 응답](#구현가능한-method와-응답)
 5. [코드 설명](#코드-설명)
+   1. [server.py](#1-serverpy)
+   2. [client.py](#2-clientpy)
 6. [작동예시](#작동예시)
 7. [WireShark로 캡쳐한 통신](#wireshark로-캡쳐한-통신)
 
@@ -66,7 +68,7 @@ GET-응답 4xx, GET-응답 2xx, HEAD-응답 1xx, POST-응답 2xx, POST-응답 1x
 * `HOST` : 현 서버의 IP
 * `path` : `request`로 들어온 `path`와 같은 값이다.
 * `body` : `HEAD`를 제외한 `request`의 `response`는 해당하는 본문을 `body`로 갖는다.
-   * 예시는 [함수 설명](https://github.com/Syzseisus/ComputerNetwork/edit/main/MidTerm_Replace_HW/README.md#1-serverpy) 참조
+   * 예시는 [함수 설명](#1-serverpy) 참조
 
 
 
@@ -176,7 +178,7 @@ server의 `response` header의 status와 code:
           return response
     ```
 4. response 작성
-    * 모든 `response`는 [언급했듯](#client의-request-형식) 아래의 format을 따릅니다.
+    * 모든 `response`는 [언급했듯](#server의-response-형식) 아래의 format을 따릅니다.
     ```python
       def response_formatting(code, path, body=''):
       
@@ -323,12 +325,12 @@ server의 `response` header의 status와 code:
             if not POST_continue:
                 client_socket, address = server_socket.accept()
         ```
-10. client와 통신(2) - receive request
+9. client와 통신(2) - receive request
     * client의 request를 수신합니다.
         ```python
             request = client_socket.recv(65535).decode('utf-8')
         ```
-11. client와 통신(3) - request 해석, response 반환
+10. client와 통신(3) - request 해석, response 반환
     * request를 적절히 분해 후 `from_request_to_response` 함수로 적절한 response를 만듦니다.
     * `if`문은 client에서 'END'를 보낼 경우 server를 끄기 위한 부분입니다.
         ```python
@@ -343,15 +345,15 @@ server의 `response` header의 status와 code:
 
             response = from_request_to_response(method, url, request_body)
         ```
-12. client와 통신(4) - response 보내기
-    * 그렇게 만들어진 response를 client에게 보냅니다.
-    * 만약 `POST 100 CONTINUE`인 경우 accept을 스킵하기 위해 `POST_continue`변수를 변경합니다.
+11. client와 통신(4) - response 보내기
+      * 그렇게 만들어진 response를 client에게 보냅니다.
+      * 만약 `POST 100 CONTINUE`인 경우 accept을 스킵하기 위해 `POST_continue`변수를 변경합니다.
         ```python
             client_socket.sendall(response.encode('utf-8'))
             POST_continue = 'What do you want to' in response.split('\n')[-2]
         ```
-13. 종료
-   * `while True`가 끝나면 client와 server를 종료합니다.
+12. 종료
+      * `while True`가 끝나면 client와 server를 종료합니다.
       ```python
       client_socket.close()
       server_socket.close()      
@@ -393,7 +395,7 @@ server의 `response` header의 status와 code:
       ]
       ```
 5. request 작성
-    * `test_case`에서 가져온 `method`, `url`, `body`, `IP`를 바탕으로 request를 작성합니다. 
+    * `test_case`에서 가져온 `method`, `url`, `body`, `IP`를 바탕으로 [언급했던 양식으로](#client의-request-) request를 작성합니다. 
         ```python
         def request_formating(method, url, body, IP):
 
